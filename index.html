@@ -6,11 +6,11 @@
     <title>🏪 KASIR LMJ — Lengkap</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: #f0f4f8; padding: 10px; max-width: 520px; margin: 0 auto; padding-bottom: 30px; }
+        body { background: #f0f4f8; padding: 10px; max-width: 540px; margin: 0 auto; padding-bottom: 30px; }
         
-        /* LOGIN */
         .login-box { position: fixed; inset: 0; background: linear-gradient(135deg, #0f766e, #14b8a6); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
         .login-card { background: white; padding: 30px; border-radius: 16px; width: 100%; max-width: 380px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
         .login-card h2 { text-align: center; color: #0f766e; margin-bottom: 25px; font-size: 28px; }
@@ -22,17 +22,15 @@
         .peran input { display: none; }
         .peran input:checked + label { border-color: #0f766e; background: #ccfbf1; color: #0f766e; }
         
-        /* HEADER & TAB */
         .header { background: linear-gradient(135deg, #0f766e, #14b8a6); color: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; text-align: center; }
         .user-info { font-size: 13px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
         .btn-logout { background: #f43f5e; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
         .tab-bar { display: flex; gap: 5px; margin-bottom: 15px; flex-wrap: wrap; }
-        .tab { flex: 1; min-width: 80px; padding: 10px; border: none; border-radius: 8px; background: #e2e8f0; cursor: pointer; font-weight: 600; font-size: 13px; }
+        .tab { flex: 1; min-width: 75px; padding: 10px; border: none; border-radius: 8px; background: #e2e8f0; cursor: pointer; font-weight: 600; font-size: 12.5px; }
         .tab.aktif { background: #0f766e; color: white; }
         .konten-tab { display: none; }
         .konten-tab.aktif { display: block; }
         
-        /* SCANNER BARCODE */
         .barcode-box { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
         .btn-scan { width: 100%; padding: 12px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
         #reader { width: 100%; border-radius: 10px; overflow: hidden; display: none; }
@@ -43,14 +41,12 @@
         .status-scan.berhasil { background: #dcfce7; color: #166534; display: block; }
         .status-scan.gagal { background: #fee2e2; color: #991b1b; display: block; }
         
-        /* PRODUK & KERANJANG */
         .produk-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
         .produk { background: white; padding: 12px; border-radius: 10px; text-align: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.08); }
         .produk:active { transform: scale(0.96); background: #ccfbf1; }
         .produk-nama { font-weight: bold; font-size: 13px; margin-bottom: 4px; }
         .produk-harga { color: #0f766e; font-size: 12px; font-weight: 600; }
         .produk-stok { font-size: 10px; color: #888; margin-top: 2px; }
-        .produk-barcode { font-size: 9px; color: #aaa; margin-top: 2px; }
         
         .keranjang { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
         .keranjang h3 { margin-bottom: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
@@ -68,14 +64,24 @@
         .kembalian-box { font-size: 20px; margin-top: 12px; padding: 10px; background: #dcfce7; border-radius: 8px; text-align: center; }
         .kembalian-box strong { color: #166534; }
         
-        .btn { width: 100%; padding: 14px; font-size: 17px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; margin-top: 8px; }
+        .btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; margin-top: 8px; }
         .btn-bayar { background: linear-gradient(135deg, #16a34a, #15803d); color: white; }
         .btn-reset { background: #f43f5e; color: white; }
         .btn-pdf { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; }
-        .btn-cetak { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        .btn-excel { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        .btn-drive { background: linear-gradient(135deg, #4285f4, #34a853, #fbbc05, #ea4335); color: white; }
         .btn-backup { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
         
-        /* NOTA PDF */
+        .laporan-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .laporan-card h3 { margin-bottom: 12px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
+        .laporan-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+        .laporan-row:last-child { border-bottom: none; }
+        .laporan-nilai { font-weight: bold; color: #0f766e; }
+        .laporan-angkabesar { font-size: 20px; font-weight: 900; color: #1e293b; }
+        .tab-laporan { display: flex; gap: 8px; margin-bottom: 15px; }
+        .tab-laporan button { flex: 1; padding: 10px; border: none; border-radius: 8px; background: #e2e8f0; cursor: pointer; font-weight: 600; }
+        .tab-laporan button.aktif { background: #0f766e; color: white; }
+        
         .nota-wrapper { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; padding: 20px; overflow-y: auto; }
         .nota-wrapper.aktif { display: flex; align-items: center; justify-content: center; }
         .nota { background: white; width: 80mm; padding: 20px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.5; }
@@ -90,7 +96,6 @@
 </head>
 <body>
 
-<!-- LOGIN -->
 <div class="login-box" id="loginLayer">
     <div class="login-card">
         <h2>🏪 KASIR LMJ</h2>
@@ -110,10 +115,9 @@
     </div>
 </div>
 
-<!-- APLIKASI UTAMA -->
 <div id="aplikasiUtama" style="display:none;">
     <div class="header">
-        <h2>KASIR LMJ</h2>
+        <h2>KASIR LMJ — Laporan Lengkap</h2>
         <p id="tanggal"></p>
         <div class="user-info">
             <span id="namaUser"></span>
@@ -124,10 +128,10 @@
     <div class="tab-bar">
         <button class="tab aktif" onclick="bukaTab('kasir')">🛒 Kasir</button>
         <button class="tab" onclick="bukaTab('riwayat')">📋 Riwayat</button>
+        <button class="tab admin-only" onclick="bukaTab('laporan')">📊 Laporan</button>
         <button class="tab" onclick="bukaTab('backup')">💾 Backup</button>
     </div>
 
-    <!-- TAB KASIR — ADA SCANNER! -->
     <div class="konten-tab aktif" id="tab-kasir">
         <div class="barcode-box">
             <button class="btn-scan" id="btnScan" onclick="toggleScanner()">📷 Scan Barcode</button>
@@ -160,23 +164,93 @@
         </div>
     </div>
 
-    <!-- TAB RIWAYAT -->
     <div class="konten-tab" id="tab-riwayat">
         <h3 style="margin-bottom:15px;">📋 Riwayat Transaksi</h3>
         <div id="daftarRiwayat"></div>
     </div>
 
-    <!-- TAB BACKUP -->
-    <div class="konten-tab" id="tab-backup">
-        <h3 style="margin-bottom:15px;">💾 Backup Data</h3>
-        <div class="bayar-box">
-            <button class="btn btn-backup" onclick="backupData()">📥 Unduh Backup</button>
-            <input type="file" id="fileBackup" accept=".json" style="display:none;" onchange="pulihkanData(event)">
-            <button class="btn btn-bayar" style="background:#10b981;" onclick="document.getElementById('fileBackup').click()">📤 Pulihkan Data</button>
+    <div class="konten-tab admin-only" id="tab-laporan">
+        <h3 style="margin-bottom:15px;">📊 Laporan Keuangan</h3>
+        
+        <div class="tab-laporan">
+            <button class="aktif" onclick="pilihLaporan('harian')">📅 Harian</button>
+            <button onclick="pilihLaporan('bulanan')">📆 Bulanan</button>
+        </div>
+
+        <div id="laporanHarian" class="laporan-card">
+            <h3>📅 Laporan Hari Ini — <span id="hariIni"></span></h3>
+            <div class="laporan-row">
+                <span>Jumlah Transaksi</span>
+                <span class="laporan-nilai" id="h_jml">0 kali</span>
+            </div>
+            <div class="laporan-row">
+                <span>Total Penjualan (Kotor)</span>
+                <span class="laporan-nilai laporan-angkabesar" id="h_kotor">Rp 0</span>
+            </div>
+            <div class="laporan-row">
+                <span>Total Diskon Diberikan</span>
+                <span class="laporan-nilai" id="h_diskon">Rp 0</span>
+            </div>
+            <div class="laporan-row">
+                <span>Total Pendapatan (Bersih)</span>
+                <span class="laporan-nilai laporan-angkabesar" id="h_bersih">Rp 0</span>
+            </div>
+            <div class="laporan-row">
+                <span>Rata-rata per Transaksi</span>
+                <span class="laporan-nilai" id="h_rata">Rp 0</span>
+            </div>
+            <button class="btn btn-pdf" onclick="eksporLaporanPDF('harian')">📄 Simpan PDF</button>
+            <button class="btn btn-excel" onclick="eksporLaporanExcel('harian')">📊 Simpan Excel</button>
+            <button class="btn btn-drive" onclick="hubungkanDrive()">☁️ Google Drive</button>
+        </div>
+
+        <div id="laporanBulanan" class="laporan-card" style="display:none;">
+            <h3>📆 Laporan Bulan — <span id="bulanIni"></span></h3>
+            <div class="laporan-row">
+                <span>Jumlah Transaksi</span>
+                <span class="laporan-nilai" id="b_jml">0 kali</span>
+            </div>
+            <div class="laporan-row">
+                <span>Total Penjualan (Kotor)</span>
+                <span class="laporan-nilai laporan-angkabesar" id="b_kotor">Rp 0</span>
+            </div>
+            <div class="laporan-row">
+                <span>Total Diskon Diberikan</span>
+                <span class="laporan-nilai" id="b_diskon">Rp 0</span>
+            </div>
+            <div class="laporan-row">
+                <span>Total Pendapatan (Bersih)</span>
+                <span class="laporan-nilai laporan-angkabesar" id="b_bersih">Rp 0</span>
+            </div>
+            <div class="laporan-row">
+                <span>Rata-rata per Transaksi</span>
+                <span class="laporan-nilai" id="b_rata">Rp 0</span>
+            </div>
+            <div class="laporan-row">
+                <span>Jumlah Hari Aktif</span>
+                <span class="laporan-nilai" id="b_hari">0 hari</span>
+            </div>
+            <button class="btn btn-pdf" onclick="eksporLaporanPDF('bulanan')">📄 Simpan PDF</button>
+            <button class="btn btn-excel" onclick="eksporLaporanExcel('bulanan')">📊 Simpan Excel</button>
+            <button class="btn btn-drive" onclick="hubungkanDrive()">☁️ Google Drive</button>
         </div>
     </div>
 
-    <!-- NOTA / STRUK — ADA TOMBOL PDF! -->
+    <div class="konten-tab" id="tab-backup">
+        <h3 style="margin-bottom:15px;">💾 Backup & Simpan Data</h3>
+        <div class="laporan-card">
+            <button class="btn btn-backup" onclick="backupData()">📥 Unduh Backup Lengkap</button>
+            <input type="file" id="fileBackup" accept=".json" style="display:none;" onchange="pulihkanData(event)">
+            <button class="btn btn-bayar" style="background:#10b981;" onclick="document.getElementById('fileBackup').click()">📤 Pulihkan Data</button>
+            <button class="btn btn-drive" onclick="hubungkanDrive()">☁️ Google Drive</button>
+            <p style="font-size:12px; color:#666; margin-top:10px;">
+                💡 Cara simpan ke Google Drive:<br>
+                1. Tekan "Simpan PDF/Excel" → file tersimpan di HP/Komputer<br>
+                2. Buka Google Drive → tekan "+" → Unggah → pilih file
+            </p>
+        </div>
+    </div>
+
     <div class="nota-wrapper" id="notaModal">
         <div class="tombol-tutup">
             <button class="btn btn-reset" style="width:auto; padding:8px 20px;" onclick="tutupNota()">✖ Tutup</button>
@@ -195,9 +269,9 @@
             <div class="nota-hr"></div>
             <div class="nota-row"><span>Subtotal:</span><span id="notaSubtotal">-</span></div>
             <div class="nota-row"><span>Diskon:</span><span id="notaDiskon">-</span></div>
-            <div class="nota-total nota-row"><span>TOTAL:</span><span id="notaTotal">-</span></div>
-            <div class="nota-row"><span>Bayar:</span><span id="notaBayar">-</span></div>
-            <div class="nota-row"><span>Kembali:</span><span id="notaKembali">-</span></div>
+            <div class="nota-total nota-row"><span>TOTAL BAYAR:</span><span id="notaTotal">-</span></div>
+            <div class="nota-row"><span>Uang Dibayar:</span><span id="notaBayar">-</span></div>
+            <div class="nota-row"><span>Kembalian:</span><span id="notaKembali">-</span></div>
             <div class="nota-hr"></div>
             <div style="text-align:center; margin-top:15px; font-size:11px;">
                 <p>🙏 Terima Kasih Telah Berbelanja!</p>
@@ -205,13 +279,12 @@
         </div>
         <div style="margin-top:15px; display:flex; gap:10px;">
             <button class="btn btn-pdf" style="flex:1;" onclick="simpanNotaPDF()">📄 Simpan PDF</button>
-            <button class="btn btn-cetak" style="flex:1;" onclick="cetakNota()">🖨️ Cetak</button>
+            <button class="btn btn-cetak" style="flex:1; background:linear-gradient(135deg, #f59e0b, #d97706); color:white;" onclick="cetakNota()">🖨️ Cetak</button>
         </div>
     </div>
 </div>
 
 <script>
-// DATA PENGGUNA — PASTI BISA MASUK!
 const DEFAULT_USERS = {
     admin: { nama: 'admin', sandi: '123456', peran: 'admin' },
     kasir: { nama: 'kasir', sandi: '123456', peran: 'kasir' }
@@ -233,8 +306,8 @@ const DEFAULT_PRODUK = [
 let penggunaSaatIni = null;
 let keranjang = [], riwayat = [], noTransaksi = 1, produkStok = [];
 let html5QrCode = null, scannerAktif = false;
+let tipeLaporanAktif = 'harian';
 
-// LOGIN
 function loginMasuk() {
     const peran = document.querySelector('input[name="peran"]:checked').value;
     const nama = document.getElementById('userNama').value.trim().toLowerCase();
@@ -265,6 +338,8 @@ function inisialisasi() {
     noTransaksi = parseInt(localStorage.getItem('noTrxLMJ') || '1');
     document.getElementById('tanggal').textContent = new Date().toLocaleString('id-ID');
     tampilProduk();
+    tampilRiwayat();
+    hitungLaporan();
 }
 
 function bukaTab(nama) {
@@ -273,9 +348,56 @@ function bukaTab(nama) {
     event.target.classList.add('aktif');
     document.getElementById(`tab-${nama}`).classList.add('aktif');
     if(nama === 'riwayat') tampilRiwayat();
+    if(nama === 'laporan') hitungLaporan();
 }
 
-// SCANNER BARCODE
+function pilihLaporan(tipe) {
+    tipeLaporanAktif = tipe;
+    document.querySelectorAll('.tab-laporan button').forEach(b => b.classList.remove('aktif'));
+    event.target.classList.add('aktif');
+    document.getElementById('laporanHarian').style.display = tipe === 'harian' ? 'block' : 'none';
+    document.getElementById('laporanBulanan').style.display = tipe === 'bulanan' ? 'block' : 'none';
+    hitungLaporan();
+}
+
+function hitungLaporan() {
+    const hariIni = new Date().toLocaleDateString('id-ID');
+    const sekarang = new Date();
+    const namaBulan = sekarang.toLocaleString('id-ID', { month:'long', year:'numeric' });
+    const bulanIni = `${sekarang.getFullYear()}-${String(sekarang.getMonth()+1).padStart(2,'0')}`;
+    
+    document.getElementById('hariIni').textContent = hariIni;
+    document.getElementById('bulanIni').textContent = namaBulan;
+    
+    const dataHarian = riwayat.filter(r => r.tanggal.includes(hariIni));
+    const h_jml = dataHarian.length;
+    const h_kotor = dataHarian.reduce((s, r) => s + (r.subtotal || r.total), 0);
+    const h_diskon = dataHarian.reduce((s, r) => s + (r.diskon || 0), 0);
+    const h_bersih = dataHarian.reduce((s, r) => s + r.total, 0);
+    const h_rata = h_jml > 0 ? h_bersih / h_jml : 0;
+    
+    document.getElementById('h_jml').textContent = `${h_jml} kali`;
+    document.getElementById('h_kotor').textContent = `Rp ${h_kotor.toLocaleString('id-ID')}`;
+    document.getElementById('h_diskon').textContent = `Rp ${h_diskon.toLocaleString('id-ID')}`;
+    document.getElementById('h_bersih').textContent = `Rp ${h_bersih.toLocaleString('id-ID')}`;
+    document.getElementById('h_rata').textContent = `Rp ${Math.round(h_rata).toLocaleString('id-ID')}`;
+    
+    const dataBulanan = riwayat.filter(r => r.tanggal.includes(bulanIni));
+    const b_jml = dataBulanan.length;
+    const b_kotor = dataBulanan.reduce((s, r) => s + (r.subtotal || r.total), 0);
+    const b_diskon = dataBulanan.reduce((s, r) => s + (r.diskon || 0), 0);
+    const b_bersih = dataBulanan.reduce((s, r) => s + r.total, 0);
+    const b_rata = b_jml > 0 ? b_bersih / b_jml : 0;
+    const b_hari = [...new Set(dataBulanan.map(r => r.tanggal.split(' ')[0]))].length;
+    
+    document.getElementById('b_jml').textContent = `${b_jml} kali`;
+    document.getElementById('b_kotor').textContent = `Rp ${b_kotor.toLocaleString('id-ID')}`;
+    document.getElementById('b_diskon').textContent = `Rp ${b_diskon.toLocaleString('id-ID')}`;
+    document.getElementById('b_bersih').textContent = `Rp ${b_bersih.toLocaleString('id-ID')}`;
+    document.getElementById('b_rata').textContent = `Rp ${Math.round(b_rata).toLocaleString('id-ID')}`;
+    document.getElementById('b_hari').textContent = `${b_hari} hari`;
+}
+
 function toggleScanner() {
     if(!scannerAktif) {
         document.getElementById('reader').style.display = 'block';
@@ -324,7 +446,6 @@ function cariProdukBarcode(kode) {
     setTimeout(() => document.getElementById('statusScan').className = 'status-scan', 3000);
 }
 
-// PRODUK & KERANJANG
 function tampilProduk() {
     const el = document.getElementById('produkGrid');
     el.innerHTML = '';
@@ -334,7 +455,6 @@ function tampilProduk() {
                 <div class="produk-nama">${p.nama}</div>
                 <div class="produk-harga">Rp ${p.harga.toLocaleString('id-ID')}</div>
                 <div class="produk-stok">Stok: ${p.stok}</div>
-                <div class="produk-barcode">${p.barcode}</div>
             </div>
         `;
     });
@@ -397,7 +517,6 @@ function hitungKembalian() {
     document.getElementById('kembalian').textContent = `Rp ${(bayar - total).toLocaleString('id-ID')}`;
 }
 
-// PROSES BAYAR & NOTA
 function prosesBayar() {
     const subtotal = keranjang.reduce((s, i) => s + i.harga*i.qty, 0);
     const diskonPct = parseInt(document.getElementById('diskon').value) || 0;
@@ -409,11 +528,9 @@ function prosesBayar() {
     if(keranjang.length === 0) return alert('⚠️ Keranjang kosong!');
     if(bayar < total) return alert(`⚠️ Uang kurang Rp ${(total - bayar).toLocaleString('id-ID')}`);
     
-    // Kurangi stok
     keranjang.forEach(item => { const p = produkStok.find(x => x.id === item.id); if(p) p.stok -= item.qty; });
     localStorage.setItem('stokLMJ', JSON.stringify(produkStok));
     
-    // Isi Nota
     const noTrx = `TRX-${String(noTransaksi).padStart(6, '0')}`;
     const tgl = new Date().toLocaleString('id-ID');
     document.getElementById('notaNo').textContent = noTrx;
@@ -431,26 +548,25 @@ function prosesBayar() {
     });
     document.getElementById('notaItem').innerHTML = itemHtml;
     
-    // Simpan riwayat
     riwayat.unshift({ no:noTrx, tanggal:tgl, kasir:penggunaSaatIni.nama, subtotal, diskon, total, bayar, kembali, items:[...keranjang] });
     localStorage.setItem('riwayatLMJ', JSON.stringify(riwayat));
     localStorage.setItem('noTrxLMJ', ++noTransaksi);
     
     tampilProduk();
+    tampilRiwayat();
+    hitungLaporan();
     document.getElementById('notaModal').classList.add('aktif');
 }
 
 function resetKeranjang() { keranjang = []; document.getElementById('uangBayar').value = ''; document.getElementById('diskon').value = '0'; updateKeranjang(); }
 function tutupNota() { document.getElementById('notaModal').classList.remove('aktif'); resetKeranjang(); }
 
-// PDF & CETAK
 function simpanNotaPDF() {
     html2pdf().set({ filename: `Nota_${document.getElementById('notaNo').textContent}.pdf`, jsPDF:{unit:'mm', format:[80,200], orientation:'portrait'}, margin:5 }).from(document.getElementById('notaCetak')).save();
     alert('✅ PDF tersimpan di folder Download!');
 }
 function cetakNota() { window.print(); }
 
-// RIWAYAT
 function tampilRiwayat() {
     const el = document.getElementById('daftarRiwayat');
     if(riwayat.length === 0) { el.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">Belum ada transaksi</p>'; return; }
@@ -468,17 +584,79 @@ function tampilRiwayat() {
     });
 }
 
-// BACKUP
+function eksporLaporanPDF(tipe) {
+    const nama = tipe === 'harian' 
+        ? `Laporan_Harian_${new Date().toLocaleDateString('id-ID')}` 
+        : `Laporan_Bulanan_${new Date().toLocaleString('id-ID',{month:'long',year:'numeric'})}`;
+    
+    const konten = tipe === 'harian' 
+        ? document.getElementById('laporanHarian') 
+        : document.getElementById('laporanBulanan');
+    
+    html2pdf().set({ filename: `${nama}.pdf`, margin:15 }).from(konten).save();
+    alert('✅ Laporan PDF tersimpan!');
+}
+
+function eksporLaporanExcel(tipe) {
+    const hariIni = new Date().toLocaleDateString('id-ID');
+    const bulanIni = new Date().toLocaleString('id-ID', { month:'long', year:'numeric' });
+    
+    let data = [];
+    if(tipe === 'harian') {
+        data = [
+            ['LAPORAN PENJUALAN HARIAN', ''],
+            ['Tanggal', hariIni],
+            ['', ''],
+            ['Jumlah Transaksi', document.getElementById('h_jml').textContent],
+            ['Total Penjualan Kotor', document.getElementById('h_kotor').textContent],
+            ['Total Diskon', document.getElementById('h_diskon').textContent],
+            ['Total Pendapatan Bersih', document.getElementById('h_bersih').textContent],
+            ['Rata-rata per Transaksi', document.getElementById('h_rata').textContent]
+        ];
+    } else {
+        data = [
+            ['LAPORAN PENJUALAN BULANAN', ''],
+            ['Bulan', bulanIni],
+            ['', ''],
+            ['Jumlah Transaksi', document.getElementById('b_jml').textContent],
+            ['Total Penjualan Kotor', document.getElementById('b_kotor').textContent],
+            ['Total Diskon', document.getElementById('b_diskon').textContent],
+            ['Total Pendapatan Bersih', document.getElementById('b_bersih').textContent],
+            ['Rata-rata per Transaksi', document.getElementById('b_rata').textContent],
+            ['Jumlah Hari Aktif', document.getElementById('b_hari').textContent]
+        ];
+    }
+    
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Laporan');
+    const namaFile = tipe === 'harian' 
+        ? `Laporan_Harian_${hariIni}.xlsx` 
+        : `Laporan_Bulanan_${bulanIni.replace(' ','_')}.xlsx`;
+    XLSX.writeFile(wb, namaFile);
+    alert('✅ File Excel tersimpan! Bisa dibuka di Excel / Google Sheets');
+}
+
+function hubungkanDrive() {
+    alert('☁️ Cara Simpan ke Google Drive:\n\n1. Tekan "Simpan PDF" atau "Simpan Excel"\n2. File tersimpan di HP/Komputer\n3. Buka Google Drive → tekan "+" → Unggah → pilih file\n\nNanti akan ditambahkan fitur otomatis!');
+}
+
 function backupData() {
-    const data = { produk:produkStok, riwayat, noTransaksi };
+    const data = { 
+        produk: produkStok, 
+        riwayat: riwayat, 
+        noTransaksi: noTransaksi,
+        tanggalBackup: new Date().toLocaleString('id-ID')
+    };
     const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `backup-lmj-${new Date().toISOString().slice(0,10)}.json`;
+    a.download = `Backup_LMJ_${new Date().toISOString().slice(0,10)}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
-    alert('✅ Backup tersimpan!');
+    alert('✅ Backup tersimpan! Simpan file ini di tempat aman!');
 }
+
 function pulihkanData(e) {
     const f = e.target.files[0];
     if(!f) return;
@@ -491,7 +669,9 @@ function pulihkanData(e) {
             if(d.noTransaksi) { noTransaksi = d.noTransaksi; localStorage.setItem('noTrxLMJ', d.noTransaksi); }
             alert('✅ Data dipulihkan! Halaman akan dimuat ulang.');
             location.reload();
-        } catch(err) { alert('❌ File tidak valid!'); }
+        } catch(err) {
+            alert('❌ File tidak valid!');
+        }
     };
     r.readAsText(f);
 }
