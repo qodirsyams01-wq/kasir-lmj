@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏪 KASIR LMJ — Sistem Kasir Lengkap</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #f0f4f8; padding: 10px; max-width: 520px; margin: 0 auto; padding-bottom: 30px; }
+        
+        /* 🔐 LAYER LOGIN */
+        .login-box { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #0f766e, #14b8a6); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
+        .login-card { background: white; padding: 30px; border-radius: 16px; width: 100%; max-width: 380px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .login-logo { max-width: 110px; max-height: 80px; display: block; margin: 0 auto 15px auto; object-fit: contain; }
+        .login-card h2 { text-align: center; color: #0f766e; margin-bottom: 25px; }
+        .login-card input { width: 100%; padding: 14px; font-size: 16px; border: 2px solid #e2e8f0; border-radius: 10px; margin-bottom: 15px; outline: none; }
+        .login-card input:focus { border-color: #0f766e; }
+        .btn-login { width: 100%; padding: 14px; background: #0f766e; color: white; border: none; border-radius: 10px; font-size: 17px; font-weight: bold; cursor: pointer; }
+        .btn-login:active { background: #0d9488; }
+        .peran { display: flex; gap: 10px; margin-bottom: 15px; }
+        .peran label { flex:1; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; text-align: center; cursor: pointer; font-weight: 600; }
+        .peran input { display: none; }
+        .peran input:checked + label { border-color: #0f766e; background: #ccfbf1; color: #0f766e; }
+
+        /* 📱 HEADER APLIKASI */
+        .header { background: linear-gradient(135deg, #0f766e, #14b8a6); color: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); text-align: center; }
+        .app-logo { max-width: 90px; max-height: 60px; display: block; margin: 0 auto 8px auto; object-fit: contain; }
+        .header h2 { font-size: 22px; }
+        .user-info { font-size: 13px; margin-top: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-logout { background: #f43f5e; color: white; border: none; padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+        
+        .tab-bar { display: flex; gap: 5px; margin-bottom: 15px; flex-wrap: wrap; }
+        .tab { flex:1; min-width: 80px; padding: 10px; border: none; border-radius: 8px; background: #e2e8f0; cursor: pointer; font-weight: 600; font-size: 13px; }
+        .tab.aktif { background: #0f766e; color: white; }
+        .konten-tab { display: none; }
+        .konten-tab.aktif { display: block; }
+        
+        /* 📷 SCANNER BARCODE */
+        .barcode-box { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        #reader { width: 100%; border-radius: 10px; overflow: hidden; }
+        .btn-scan { width: 100%; padding: 12px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        .barcode-input { display: flex; gap: 8px; margin-top: 10px; }
+        .barcode-input input { flex:1; padding: 10px; font-size: 15px; border: 2px solid #e2e8f0; border-radius: 8px; outline: none; }
+        .barcode-input button { padding: 10px 15px; background: #0f766e; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .status-scan { padding: 10px; border-radius: 8px; margin-top: 10px; display: none; }
+        .status-scan.berhasil { background: #dcfce7; color: #166534; display: block; }
+        .status-scan.gagal { background: #fee2e2; color: #991b1b; display: block; }
+        
+        /* 📦 PRODUK & KERANJANG */
+        .produk-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .produk { background: white; padding: 12px; border-radius: 10px; text-align: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.08); transition: 0.15s; }
+        .produk:active { transform: scale(0.96); background: #ccfbf1; }
+        .produk-nama { font-weight: bold; font-size: 13px; margin-bottom: 4px; line-height: 1.3; }
+        .produk-harga { color: #0f766e; font-size: 12px; font-weight: 600; }
+        .produk-stok { font-size: 10px; color: #888; margin-top: 2px; }
+        .produk-barcode { font-size: 9px; color: #aaa; margin-top: 2px; }
+        
+        .keranjang { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .keranjang h3 { margin-bottom: 10px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
+        .item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+        .item .nama { flex: 2; font-size: 14px; }
+        .item .qty { flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px; }
+        .item button { width: 30px; height: 30px; border: none; border-radius: 50%; background: #ef4444; color: white; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+        .item .harga { flex: 1; text-align: right; font-weight: bold; font-size: 14px; color: #334155; }
+        
+        .total-box { background: linear-gradient(135deg, #fef3c7, #fde68a); padding: 15px; border-radius: 10px; margin: 12px 0; }
+        .total-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 15px; }
+        .total-besar { font-size: 24px; font-weight: 900; color: #92400e; margin-top: 5px; }
+        
+        .bayar-box { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        label { font-weight: 600; color: #475569; font-size: 14px; }
+        input { width: 100%; padding: 12px; font-size: 18px; border: 2px solid #e2e8f0; border-radius: 8px; margin: 8px 0; outline: none; }
+        input:focus { border-color: #0f766e; }
+        .kembalian-box { font-size: 20px; margin-top: 12px; padding: 10px; background: #dcfce7; border-radius: 8px; text-align: center; }
+        .kembalian-box strong { color: #166534; }
+        
+        .btn { width: 100%; padding: 14px; font-size: 17px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; margin-top: 8px; transition: 0.1s; }
+        .btn-bayar { background: linear-gradient(135deg, #16a34a, #15803d); color: white; }
+        .btn-reset { background: #f43f5e; color: white; }
+        .btn-pdf { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; margin-top: 5px; }
+        .btn-cetak { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; margin-top: 5px; }
+        .btn-backup { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+        .btn-restore { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        
+        /* 🧾 NOTA / STRUK — LOGO IKUT TERCETAK */
+        .nota-wrapper { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 999; padding: 20px; overflow-y: auto; }
+        .nota-wrapper.aktif { display: flex; align-items: center; justify-content: center; }
+        .nota { background: white; width: 80mm; max-width: 100%; padding: 20px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.5; box-shadow: 0 0 20px rgba(0,0,0,0.2); }
+        .nota-logo { max-width: 65px; max-height: 50px; display: block; margin: 0 auto 6px auto; object-fit: contain; }
+        .nota-header { text-align: center; margin-bottom: 10px; }
+        .nota-header h2 { font-size: 18px; font-weight: 900; margin-bottom: 3px; }
+        .nota-hr { border: none; border-top: 1px dashed #333; margin: 8px 0; }
+        .nota-row { display: flex; justify-content: space-between; padding: 2px 0; }
+        .nota-total { font-weight: 900; font-size: 15px; border-top: 1px dashed #333; border-bottom: 1px dashed #333; padding: 6px 0; margin: 5px 0; }
+        .nota-footer { text-align: center; margin-top: 15px; font-size: 11px; }
+        .tombol-tutup { position: sticky; top: 10px; z-index: 1000; }
+        
+        /* 📋 RIWAYAT & LAPORAN & PENGATURAN */
+        .riwayat-card { background: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .riwayat-header { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .riwayat-no { font-weight: bold; color: #0f766e; }
+        .laporan-box, .pengaturan-box { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .laporan-item, .pengaturan-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .pengaturan-item button { padding: 6px 12px; border: none; border-radius: 6px; background: #0f766e; color: white; cursor: pointer; font-size: 13px; }
+        
+        /* 👑 KHUSUS ADMIN */
+        .admin-only { display: none; }
+        body.admin .admin-only { display: block; }
+        .tambah-produk { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .tambah-produk input { margin: 4px 0; }
+        
+        @media print {
+            body * { visibility: hidden; }
+            .nota, .nota * { visibility: visible; }
+            .nota { position: absolute; left: 0; top: 0; width: 80mm; }
+            .tombol-tutup, .btn-pdf, .btn-cetak { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 🔐 HALAMAN LOGIN — LOGO PNG DI ATAS -->
+<div class="login-box" id="loginLayer">
+    <div class="login-card">
+        <!-- 🔶 LOGO PNG — HALAMAN LOGIN -->
+        <img src="logo-lmj.png" alt="Logo LMJ" class="login-logo" onerror="this.style.display='none'">
+        <h2>KASIR LMJ</h2>
+        <div class="peran">
+            <input type="radio" name="peran" id="peranAdmin" value="admin" checked>
+            <label for="peranAdmin">👑 Admin</label>
+            <input type="radio" name="peran" id="peranKasir" value="kasir">
+            <label for="peranKasir">🧑‍💼 Kasir</label>
+        </div>
+        <input type="text" id="userNama" placeholder="Nama Pengguna" required>
+        <input type="password" id="userPass" placeholder="Kata Sandi" required>
+        <button class="btn-login" onclick="loginMasuk()">🔑 Masuk</button>
+        <p style="text-align:center; margin-top:15px; font-size:12px; color:#666;">
+            ⚠️ Default: Admin → nama: <b>admin</b> pass: <b>123456</b><br>
+            Kasir → nama: <b>kasir</b> pass: <b>123456</b>
+        </p>
+    </div>
+</div>
+
+<!-- 📱 APLIKASI UTAMA -->
+<div id="aplikasiUtama" style="display:none;">
+
+<!-- 🔶 LOGO PNG — HEADER APLIKASI -->
+<div class="header">
+    <img src="logo-lmj.png" alt="Logo LMJ" class="app-logo" onerror="this.style.display='none'">
+    <h2>KASIR LMJ</h2>
+    <p id="tanggal"></p>
+    <div class="user-info">
+        <span id="namaUser"></span>
+        <button class="btn-logout" onclick="keluarAkun()">🚪 Keluar</button>
+    </div>
+</div>
+
+<!-- TAB MENU -->
+<div class="tab-bar">
+    <button class="tab aktif" onclick="bukaTab('kasir')">🛒 Kasir</button>
+    <button class="tab" onclick="bukaTab('riwayat')">📋 Riwayat</button>
+    <button class="tab" onclick="bukaTab('laporan')">📊 Laporan</button>
+    <button class="tab admin-only" onclick="bukaTab('produk')">📦 Produk</button>
+    <button class="tab" onclick="bukaTab('pengaturan')">⚙️ Backup</button>
+</div>
+
+<!-- TAB KASIR -->
+<div class="konten-tab aktif" id="tab-kasir">
+    <!-- 📷 SCANNER BARCODE -->
+    <div class="barcode-box">
+        <button class="btn-scan" id="btnScan" onclick="toggleScanner()">📷 Scan Barcode</button>
+        <div id="reader" style="display:none;"></div>
+        <div class="status-scan" id="statusScan"></div>
+        <div class="barcode-input">
+            <input type="text" id="inputBarcode" placeholder="Masukkan kode barcode manual">
+            <button onclick="cariBarcode()">🔍 Cari</button>
+        </div>
+    </div>
+
+    <!-- DAFTAR PRODUK -->
+    <div class="produk-grid" id="produkGrid"></div>
+
+    <!-- KERANJANG -->
+    <div class="keranjang">
+        <h3>🛒 Keranjang Belanja</h3>
+        <div id="daftarKeranjang">
+            <p style="color:#888; text-align:center; padding:15px;">Scan barcode atau klik barang</p>
+        </div>
+        
+        <div class="total-box">
+            <div class="total-row">
+                <span>Subtotal:</span>
+                <span id="subtotal">Rp 0</span>
+            </div>
+            <div class="total-row">
+                <span>Diskon (%):</span>
+                <span><input type="number" id="diskon" value="0" min="0" max="100" style="width:60px; padding:4px; font-size:14px; display:inline-block; margin:0;"></span>
+            </div>
+            <div class="total-row total-besar">
+                <span>TOTAL:</span>
+                <span id="totalAkhir">Rp 0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- PEMBAYARAN -->
+    <div class="bayar-box">
+        <h3>💰 Pembayaran</h3>
+        <label>Uang Diterima (Rp):</label>
+        <input type="number" id="uangBayar" placeholder="0" oninput="hitungKembalian()">
+        <div class="kembalian-box">
+            Kembalian: <strong id="kembalian">Rp 0</strong>
+        </div>
+        <button class="btn btn-bayar" onclick="prosesBayar()">✅ SELESAI & BUAT NOTA</button>
+        <button class="btn btn-reset" onclick="resetKeranjang()">🗑️ Kosongkan Keranjang</button>
+    </div>
+</div>
+
+<!-- TAB RIWAYAT -->
+<div class="konten-tab" id="tab-riwayat">
+    <h3 style="margin-bottom:15px;">📋 Riwayat Transaksi</h3>
+    <div id="daftarRiwayat"></div>
+    <button class="btn btn-reset admin-only" style="font-size:14px; padding:10px;" onclick="hapusSemuaRiwayat()">🗑️ Hapus Semua Riwayat</button>
+</div>
+
+<!-- TAB LAPORAN -->
+<div class="konten-tab" id="tab-laporan">
+    <h3 style="margin-bottom:15px;">📊 Laporan Penjualan</h3>
+    <div class="laporan-box">
+        <div class="laporan-item">
+            <span>Total Transaksi:</span>
+            <strong id="lapJumlah">0 kali</strong>
+        </div>
+        <div class="laporan-item">
+            <span>Total Omzet:</span>
+            <strong id="lapOmzet">Rp 0</strong>
+        </div>
+        <div class="laporan-item">
+            <span>Total Diskon Diberikan:</span>
+            <strong id="lapDiskon">Rp 0</strong>
+        </div>
+        <div class="laporan-item">
+            <span>Rata-rata Transaksi:</span>
+            <strong id="lapRata">Rp 0</strong>
+        </div>
+        <div class="laporan-item">
+            <span>Penjualan Hari Ini:</span>
+            <strong id="lapHariIni">Rp 0</strong>
+        </div>
+    </div>
+    <button class="btn btn-pdf" onclick="eksporLaporanPDF()">📄 Ekspor Laporan</button>
+</div>
+
+<!-- TAB PRODUK — KHUSUS ADMIN -->
+<div class="konten-tab admin-only" id="tab-produk">
+    <h3 style="margin-bottom:15px;">📦 Kelola Produk</h3>
+    <div class="tambah-produk">
+        <h4>Tambah / Edit Produk</h4>
+        <input type="text" id="editBarcode" placeholder="Kode Barcode">
+        <input type="text" id="editNama" placeholder="Nama Barang">
+        <input type="number" id="editHarga" placeholder="Harga Jual">
+        <input type="number" id="editStok" placeholder="Stok Awal">
+        <button class="btn btn-bayar" onclick="simpanProduk()">💾 Simpan Produk</button>
+    </div>
+    <div id="daftarProdukAdmin"></div>
+</div>
+
+<!-- TAB PENGATURAN & BACKUP -->
+<div class="konten-tab" id="tab-pengaturan">
+    <h3 style="margin-bottom:15px;">⚙️ Backup & Pengaturan</h3>
+    <div class="pengaturan-box">
+        <div class="pengaturan-item">
+            <span>💾 Backup Data ke File</span>
+            <button onclick="backupData()">Unduh Backup</button>
+        </div>
+        <div class="pengaturan-item">
+            <span>📂 Pulihkan Data dari File</span>
+            <input type="file" id="fileBackup" accept=".json" style="display:none;" onchange="pulihkanData(event)">
+            <button onclick="document.getElementById('fileBackup').click()">Pilih File</button>
+        </div>
+        <div class="pengaturan-item">
+            <span>☁️ Google Drive Backup</span>
+            <button onclick="alert('🔔 Fitur: Klik untuk hubungkan Google Drive — data otomatis tersimpan aman!')">Hubungkan</button>
+        </div>
+        <div class="pengaturan-item">
+            <span>👑 Ubah Kata Sandi Admin</span>
+            <button onclick="ubahSandi()">Ubah Sandi</button>
+        </div>
+    </div>
+    <p style="font-size:12px; color:#666; margin-top:10px;">
+        📌 <b>Logo:</b> Pastikan file <b>logo-lmj.png</b> ada di folder yang sama agar muncul di aplikasi & nota.<br>
+        📌 <b>Backup:</b> Rutin klik "Unduh Backup" untuk menyimpan data — simpan di tempat aman!
+    </p>
+</div>
+
+<!-- 🧾 NOTA / STRUK — LOGO PNG IKUT TERCETAK -->
+<div class="nota-wrapper" id="notaModal">
+    <div class="tombol-tutup">
+        <button class="btn btn-reset" style="width:auto; padding:8px 20px; float:right; margin:0;" onclick="tutupNota()">✖ Tutup</button>
+        <div style="clear:both;"></div>
+    </div>
+    
+    <div class="nota" id="notaCetak">
+        <div class="nota-header">
+            <!-- 🔶 LOGO PNG — NOTA / STRUK (TERCETAK DI PDF & PRINTER) -->
+            <img src="logo-lmj.png" alt="Logo LMJ" class="nota-logo" onerror="this.style.display='none'">
+            <h2>LMJ STORE</h2>
+            <p>Jl. Raya Lumajang — Kedungjati<br>Telp: 0812-3456-7890</p>
+        </div>
+        <div class="nota-hr"></div>
+        <div class="nota-row">
+            <span>No. Transaksi:</span>
+            <span id="notaNo">-</span>
+        </div>
+        <div class="nota-row">
+            <span>Kasir:</span>
+            <span id="notaKasir">-</span>
+        </div>
+        <div class="nota-row">
+            <span>Tanggal:</span>
+            <span id="notaTanggal">-</span>
+        </div>
+        <div class="nota-hr"></div>
+        <div id="notaItem"></div>
+        <div class="nota-hr"></div>
+        <div class="nota-row">
+            <span>Subtotal:</span>
+            <span id="notaSubtotal">-</span>
+        </div>
+        <div class="nota-row">
+            <span>Diskon:</span>
+            <span id="notaDiskon">-</span>
+        </div>
+        <div class="nota-total nota-row">
+            <span>TOTAL BAYAR:</span>
+            <span id="notaTotal">-</span>
+        </div>
+        <div class="nota-row">
+            <span>Uang Dibayar:</span>
+            <span id="notaBayar">-</span>
+        </div>
+        <div class="nota-row">
+            <span>Kembalian:</span>
+            <span id="notaKembali">-</span>
+        </div>
+        <div class="nota-hr"></div>
+        <div class="nota-footer">
+            <p>🙏 Terima Kasih Telah Berbelanja!</p>
+            <p>Barang yang sudah dibeli tidak dapat dikembalikan<br>tanpa perjanjian sebelumnya.</p>
+            <p style="margin-top:8px; font-size:10px;">Dicetak: <span id="notaCetakWaktu">-</span></p>
+        </div>
+    </div>
+    
+    <div style="margin-top:15px; display:flex; gap:10px;">
+        <button class="btn btn-pdf" style="flex:1;" onclick="simpanNotaPDF()">📄 Simpan PDF</button>
+        <button class="btn btn-cetak" style="flex:1;" onclick="cetakNota()">🖨️ Cetak Nota</button>
+    </div>
+</div>
+
+</div>
+
+<script>
+// ⚙️ DATA TOKO — UBAH SESUAI TOKOMU!
+const NAMA_TOKO = "LMJ STORE";
+const ALAMAT_TOKO = "Jl. Raya Lumajang — Kedungjati";
+const TELP_TOKO = "0812-3456-7890";
+
+// 🔐 DATA PENGGUNA
+const DEFAULT_USERS = {
+    admin: { nama: 'admin', sandi: '123456', peran: 'admin' },
+    kasir: { nama: 'kasir', sandi: '123456', peran: 'kasir' }
+};
+let penggunaSaatIni = null;
+let html5QrCode = null;
+let scannerAktif = false;
+
+// 📦 DATA PRODUK DENGAN BARCODE
+const DEFAULT_PRODUK = [
+    { id:1, barcode:'8991234000012', nama:'Kopi Sachet', harga:2500, stok:50 },
+    { id:2, barcode:'8991234000029', nama:'Air Mineral 600ml', harga:3000, stok:100 },
+    { id:3, barcode:'8991234000036', nama:'Roti Manis', harga:5000, stok:30 },
+    { id:4, barcode:'8991234000043', nama:'Gula Pasir 1kg', harga:15000, stok:25 },
+    { id:5, barcode:'8991234000050', nama:'Telur Ayam 1kg', harga:28000, stok:40 },
+    { id:6, barcode:'8991234000067', nama:'Mie Instan', harga:3500, stok:200 },
+    { id:7, barcode:'8991234000074', nama:'Sabun Mandi', harga:8000, stok:60 },
+    { id:8, barcode:'8991234000081', nama:'Sikat Gigi', harga:4000, stok:80 },
+    { id:9, barcode:'8991234000098', nama:'Biskuit', harga:6000, stok:45 },
+    { id:10, barcode:'8991234000104', nama:'Teh Botol', harga:4000, stok:90 },
+    // ➕ TAMBAH: {id:11, barcode:'xxx', nama:'Nama', harga:xxxx, stok:xx},
+];
+
+// 🔐 FUNGSI LOGIN
+function loginMasuk() {
+    const peran = document.querySelector('input[name="peran"]:checked').value;
+    const nama = document.getElementById('userNama').value.trim().toLowerCase();
+    const sandi = document.getElementById('userPass').value;
+    
+    const dataPengguna = JSON.parse(localStorage.getItem('penggunaLMJ') || JSON.stringify(DEFAULT_USERS));
+    const user = dataPengguna[nama];
+    
+    if(!user) return alert('❌ Pengguna tidak ditemukan!');
+    if(user.sandi !== sandi) return alert('❌ Kata sandi salah!');
+    if(user.peran !== peran) return alert('⚠️ Peran tidak sesuai! Pilih peran yang benar.');
+    
+    penggunaSaatIni = user;
+    document.getElementById('loginLayer').style.display = 'none';
+    document.getElementById('aplikasiUtama').style.display = 'block';
+    document.getElementById('namaUser').textContent = `${user.peran === 'admin' ? '👑' : '🧑‍💼'} ${user.nama}`;
+    
+    if(user.peran === 'admin') document.body.classList.add('admin');
+    
+    inisialisasiAplikasi();
+}
+
+function keluarAkun() {
+    if(!confirm('Yakin ingin keluar?')) return;
+    penggunaSaatIni = null;
+    document.getElementById('aplikasiUtama').style.display = 'none';
+    document.getElementById('loginLayer').style.display = 'flex';
+    document.body.classList.remove('admin');
+    if(scannerAktif) toggleScanner();
+}
+
+// 🚀 INISIALISASI
+let keranjang = [], riwayat = [], noTransaksi = 1, produkStok = [];
+
+function inisialisasiAplikasi() {
+    produkStok = JSON.parse(localStorage.getItem('stokProdukLMJ') || JSON.stringify(DEFAULT_PRODUK));
+    riwayat = JSON.parse(localStorage.getItem('riwayatKasirLMJ') || '[]');
+    noTransaksi = parseInt(localStorage.getItem('noTransaksiLMJ') || '1');
+    
+    document.getElementById('tanggal').textContent = new Date().toLocaleString('id-ID', {
+        weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'
+    });
+    
+    tampilProduk();
+    tampilkanRiwayat();
+}
+
+// 📱 SCANNER BARCODE
+function toggleScanner() {
+    if(!scannerAktif) {
+        document.getElementById('reader').style.display = 'block';
+        document.getElementById('btnScan').textContent = '📷 Tutup Scanner';
+        scannerAktif = true;
+        
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: {width:250, height:150} },
+            (decodedText) => {
+                document.getElementById('statusScan').className = 'status-scan berhasil';
+                document.getElementById('statusScan').textContent = '✅ Terbaca: ' + decodedText;
+                cariProdukBarcode(decodedText);
+                html5QrCode.stop();
+                document.getElementById('reader').style.display = 'none';
+                document.getElementById('btnScan').textContent = '📷 Scan Barcode';
+                scannerAktif = false;
+            },
+            (err) => {}
+        ).catch(err => {
+            alert('⚠️ Izinkan akses kamera di pengaturan HP!');
+            scannerAktif = false;
+            document.getElementById('btnScan').textContent = '📷 Scan Barcode';
+        });
+    } else {
+        if(html5QrCode) html5QrCode.stop().catch(e=>{});
+        document.getElementById('reader').style.display = 'none';
+        document.getElementById('btnScan').textContent = '📷 Scan Barcode';
+        document.getElementById('statusScan').className = 'status-scan';
+        scannerAktif = false;
+    }
+}
+
+function cariBarcode() {
+    const kode = document.getElementById('inputBarcode').value.trim();
+    if(!kode) return;
+    cariProdukBarcode(kode);
+    document.getElementById('inputBarcode').value = '';
+}
+
+function cariProdukBarcode(kodeBarcode) {
+    const p = produkStok.find(x => x.barcode === kodeBarcode);
+    if(!p) {
+        document.getElementById('statusScan').className = 'status-scan gagal';
+        document.getElementById('statusScan').textContent = '❌ Barcode tidak ditemukan: ' + kodeBarcode;
+        return;
+    }
+    document.getElementById('statusScan').className = 'status-scan berhasil';
+    document.getElementById('statusScan').textContent = '✅ ' + p.nama + ' — Rp ' + p.harga.toLocaleString('id-ID');
+    tambahKeKeranjang(p.id);
+    setTimeout(() => { document.getElementById('statusScan').className = 'status-scan'; }, 3000);
+}
+
+// 📱 FUNGSI TAB
+function bukaTab(namaTab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('aktif'));
+    document.querySelectorAll('.konten-tab').forEach(k => k.classList.remove('aktif'));
+    event.target.classList.add('aktif');
+    document.getElementById(`tab-${namaTab}`).classList.add('aktif');
+    if(namaTab === 'riwayat') tampilkanRiwayat();
+    if(namaTab === 'laporan') hitungLaporan();
+    if(namaTab === 'produk') tampilkanProdukAdmin();
+}
+
+// 📦 TAMPILKAN PRODUK
+function tampilProduk() {
+    const grid = document.getElementById('produkGrid');
+    grid.innerHTML = '';
+    produkStok.forEach(p => {
+        const stokHabis = p.stok <= 0;
+        grid.innerHTML += `
+            <div class="produk" onclick="${stokHabis ? 'alert(\'⚠️ Stok Habis!\')' : `tambahKeKeranjang(${p.id})`}" style="${stokHabis ? 'opacity:0.5; background:#fee2e2;' : ''}">
+                <div class="produk-nama">${p.nama}</div>
+                <div class="produk-harga">Rp ${p.harga.toLocaleString('id-ID')}</div>
+                <div class="produk-stok">Stok: ${p.stok}</div>
+                <div class="produk-barcode">${p.barcode}</div>
+            </div>
+        `;
+    });
+}
+
+// ➕ TAMBAH KE KERANJANG
+function tambahKeKeranjang(id) {
+    const p = produkStok.find(x => x.id === id);
+    const ada = keranjang.find(x => x.id === id);
+    if(ada) {
+        if(ada.qty >= p.stok) return alert(`⚠️ Stok tidak cukup! Tersisa: ${p.stok}`);
+        ada.qty++;
+    } else {
+        keranjang.push({ ...p, qty:1 });
+    }
+    updateKeranjang();
+}
+
+function ubahQty(idx, delta) {
+    const p = produkStok.find(x => x.id === keranjang[idx].id);
+    const qtyBaru = keranjang[idx].qty + delta;
+    if(delta > 0 && qtyBaru > p.stok) return alert(`⚠️ Stok tidak cukup! Tersisa: ${p.stok}`);
+    keranjang[idx].qty = qtyBaru;
+    if(keranjang[idx].qty <= 0) keranjang.splice(idx, 1);
+    updateKeranjang();
+}
+
+function updateKeranjang() {
+    const el = document.getElementById('daftarKeranjang');
+    if(keranjang.length === 0) {
+        el.innerHTML = '<p style="color:#888; text-align:center; padding:15px;">Scan barcode atau klik barang</p>';
+    } else {
+        el.innerHTML = '';
+        keranjang.forEach((item, idx) => {
+            el.innerHTML += `
+                <div class="item">
+                    <div class="nama">${item.nama}</div>
+                    <div class="qty">
+                        <button onclick="ubahQty(${idx}, -1)">−</button>
+                        <span>${item.qty}</span>
+                        <button onclick="ubahQty(${idx}, 1)">+</button>
+                    </div>
+                    <div class="harga">Rp ${(item.harga * item.qty).toLocaleString('id-ID')}</div>
+                </div>
+            `;
+        });
+    }
+    hitungTotal();
+}
+
+function hitungTotal() {
+    const subtotal = keranjang.reduce((sum, i) => sum + (i.harga * i.qty), 0);
+    const diskonPct = parseInt(document.getElementById('diskon').value) || 0;
+    const diskon = subtotal * diskonPct / 100;
+    const total = subtotal - diskon;
+    document.getElementById('subtotal').textContent = `Rp ${subtotal.toLocaleString('id-ID')}`;
+    document.getElementById('totalAkhir').textContent = `Rp ${total.toLocaleString('id-ID')}`;
+    hitungKembalian();
+}
+
+document.getElementById('diskon').addEventListener('input', hitungTotal);
+
+function hitungKembalian() {
+    const subtotal = keranjang.reduce((sum, i) => sum + (i.harga * i.qty), 0);
+    const diskonPct = parseInt(document.getElementById('diskon').value) || 0;
+    const total = subtotal - (subtotal * diskonPct / 100);
+    const bayar = parseInt(document.getElementById('uangBayar').value) || 0;
+    const kembali = bayar - total;
+    document.getElementById('kembalian').textContent = `Rp ${kembali.toLocaleString('id-ID')}`;
+}
+
+// ✅ PROSES BAYAR & NOTA
+function prosesBayar() {
+    const subtotal = keranjang.reduce((sum, i) => sum + (i.harga * i.qty), 0);
+    const diskonPct = parseInt(document.getElementById('diskon').value) || 0;
+    const diskon = subtotal * diskonPct / 100;
+    const total = subtotal - diskon;
+    const bayar = parseInt(document.getElementById('uangBayar').value) || 0;
+    const kembali = bayar - total;
+    
+    if(keranjang.length === 0) return alert('⚠️ Keranjang masih kosong!');
+    if(bayar < total) return alert(`⚠️ Uang kurang! Kurang Rp ${(total - bayar).toLocaleString('id-ID')}`);
+    
+    // Kurangi stok
+    keranjang.forEach(item => {
+        const p = produkStok.find(x => x.id === item.id);
+        if(p) p.stok -= item.qty;
+    });
+    localStorage.setItem('stokProdukLMJ', JSON.stringify(produkStok));
+    tampilProduk();
+    
+    // Isi Nota
+    const tglSekarang = new Date().toLocaleString('id-ID');
+    const noTrx = `TRX-${String(noTransaksi).padStart(6, '0')}`;
+    
+    document.getElementById('notaNo').textContent = noTrx;
+    document.getElementById('notaKasir').textContent = penggunaSaatIni.nama;
+    document.getElementById('notaTanggal').textContent = tglSekarang;
+    document.getElementById('notaSubtotal').textContent = `Rp ${subtotal.toLocaleString('id-ID')}`;
+    document.getElementById('notaDiskon').textContent = `Rp ${diskon.toLocaleString('id-ID')} (${diskonPct}%)`;
+    document.getElementById('notaTotal').textContent = `Rp ${total.toLocaleString('id-ID')}`;
+    document.getElementById('notaBayar').textContent = `Rp ${bayar.toLocaleString('id-ID')}`;
+    document.getElementById('notaKembali').textContent = `Rp ${kembali.toLocaleString('id-ID')}`;
+    document.getElementById('notaCetakWaktu').textContent = new Date().toLocaleString('id-ID');
+    
+    let itemHtml = '';
+    keranjang.forEach(i => {
+        itemHtml += `<div class="nota-row"><span>${i.nama} x${i.qty}</span><span>Rp ${(i.harga*i.qty).toLocaleString('id-ID')}</span></div>`;
+    });
+    document.getElementById('notaItem').innerHTML = itemHtml;
+    
+    // Simpan ke Riwayat
+    riwayat.unshift({
+        no: noTrx, tanggal: tglSekarang, kasir: penggunaSaatIni.nama,
+        subtotal, diskon, total, bayar, kembali, items: [...keranjang]
+    });
+    localStorage.setItem('riwayatKasirLMJ', JSON.stringify(riwayat));
+    localStorage.setItem('noTransaksiLMJ', ++noTransaksi);
+    
+    document.getElementById('notaModal').classList.add('aktif');
+}
+
+function resetKeranjang(tutupLangsung = true) {
+    keranjang = [];
+    document.getElementById('uangBayar').value = '';
+    document.getElementById('diskon').value = '0';
+    document.getElementById('kembalian').textContent = 'Rp 0';
+    updateKeranjang();
+    if(tutupLangsung) tutupNota();
+}
+
+function tutupNota() {
+    document.getElementById('notaModal').classList.remove('aktif');
+}
+
+// 📄 PDF & CETAK
+function simpanNotaPDF() {
+    const elemen = document.getElementById('notaCetak');
+    const namaFile = `Nota_${document.getElementById('notaNo').textContent}.pdf`;
+    html2pdf().set({
+        filename: namaFile,
+        jsPDF: { unit: 'mm', format: [80, 200], orientation: 'portrait' },
+        margin: 5,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true }
+    }).from(elemen).save();
+    alert('✅ PDF berhasil disimpan! Cek folder Download');
+}
+
+function cetakNota() { window.print(); }
+
+// 📋 RIWAYAT
+function tampilkanRiwayat() {
+    const el = document.getElementById('daftarRiwayat');
+    if(riwayat.length === 0) {
+        el.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">Belum ada transaksi</p>';
+        return;
+    }
+    el.innerHTML = '';
+    riwayat.forEach(r => {
+        el.innerHTML += `
+            <div class="riwayat-card">
+                <div class="riwayat-header">
+                    <span class="riwayat-no">${r.no}</span>
+                    <span>${r.tanggal}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:5px;">
+                    <span>Kasir: ${r.kasir || '-'}</span>
+                    <strong>Rp ${r.total.toLocaleString('id-ID')}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:#666; margin-top:3px;">
+                    <span>Bayar: Rp ${r.bayar.toLocaleString('id-ID')}</span>
+                    <span>Kembali: Rp ${r.kembali.toLocaleString('id-ID')}</span>
+                </div>
+            </div>
+        `;
+    });
+}
+
+function hapusSemuaRiwayat() {
+    if(!confirm('⚠️ Yakin hapus SEMUA riwayat? Tidak bisa dikembalikan!')) return;
+    riwayat = [];
+    localStorage.setItem('riwayatKasirLMJ', '[]');
+    tampilkanRiwayat();
+}
+
+// 📊 LAPORAN
+function hitungLaporan() {
+    if(riwayat.length === 0) {
+        document.getElementById('lapJumlah').textContent = '0 kali';
+        document.getElementById('lapOmzet').textContent = 'Rp 0';
+        document.getElementById('lapDiskon').textContent = 'Rp 0';
+        document.getElementById('lapRata').textContent = 'Rp 0';
+        document.getElementById('lapHariIni').textContent = 'Rp 0';
+        return;
+    }
+    const totalTrx = riwayat.length;
+    const totalOmzet = riwayat.reduce((sum, r) => sum + r.total, 0);
+    const totalDiskon = riwayat.reduce((sum, r) => sum + r.diskon, 0);
+    const rataRata = totalOmzet / totalTrx;
+    const hariIni = new Date().toLocaleDateString('id-ID');
+    const omzetHariIni = riwayat.filter(r => r.tanggal.includes(hariIni)).reduce((sum, r) => sum + r.total, 0);
+    
+    document.getElementById('lapJumlah').textContent = `${totalTrx} kali`;
+    document.getElementById('lapOmzet').textContent = `Rp ${total
